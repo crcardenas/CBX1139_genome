@@ -322,15 +322,12 @@ blobtools add \
     CBX1139
 ```
 
-Once you hae added all these tools, you can use the command line functions or use an interactive viewer
+Once you hae added all these tools, you can use the command line functions or use an interactive viewer. The interactive viewer will be easier to star with.
 
-However, to do so you will need to compress and download your directory, but you should be able to exclude those directories that have lots of data in them. (At the time of writing, I am waiting on Diamond to finish and haven't run this step yet)
+in the directory containing the assembly files *and* the data; use:
 
 ```
-tar -pczf CBX1139_blobtools.tar.gz 
-    /home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139 \
-    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/blasts" \
-    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/busco" \
-    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/bdiamond" \
-    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/minimap2" \
+blobtools view --remote `pwd`
 ```
+
+In the terminal on your __local machine__, run what the previous command tells you to do; and access the web address in your browser.
