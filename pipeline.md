@@ -69,13 +69,12 @@ rerunning flye like so (use nohup so the job runs in the background)
 flye --nano-corr [PATH] --out-dir [PATH] --threads 6
 ```
 
-## blobtoolkit
+## blobtoolkit, step 1
 https://blobtoolkit.genomehubs.org/
 
 references: 10.3389/fgene.2013.00237 & 10.12688/f1000research.12232.1
 
-blobtools is not entirely intuitive, I will work on filling out this section as I wrap my head around my understanding of it
-
+Blobtoolkit2 allows us to filter, and visualize the quality of our genome and potential conamination within it. We first need to create a directory for the toolkit, then we need to run additional analyses so that blobtools has data to interpret.
 
 install blobtoolkit
 
@@ -97,7 +96,7 @@ usage: blobtools [<command>] [<args>...] [-h|--help] [--version]
 ...
 ```
 
-First we need to create a new directory and appropriate databases for blobtools. In general each particular database will need to be downloaded and formated. However, this has already ben done and can be skipped. But here is an example of what it might look like. Busco, BLAST, and Diamond will each have their own database format.
+First we need to create a new directory and appropriate databases for blobtools. In general each particular database will need to be downloaded and formatted. However, this has already ben done and can be skipped. But here is an example of what it might look like. Busco, BLAST, and Diamond will each have their own database format.
 
 Typically you would create some additional databases; but they can be found here on pyrgus due to their sizes: `/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/data`
 
@@ -126,6 +125,37 @@ Your diectory should look something like this:
 ├── multi-blash.out
 ├── multi-blash.sh
 └── ncount.json
+```
+
+You can, and should, add additional information to your json file. This file type is an object oriented text based file format used to organize data.
+To add metadata for our sample, find the meta.json file (`./CBX1139/meta.json`) the field of interest will look like this:
+
+```
+...
+"taxon":{},
+...
+```
+
+You should search and edit a field that looks like this in your blobtools assembly directory (with a text editor: `nano CBX1139/meta.json`)
+
+```
+...
+"taxon": {
+    "phylum":"Arthropoda",
+    "class":"Insecta",
+    "order":"Coleoptera",
+    "suborder":"Adephaga",
+    "family":"Carabidae",
+    "subfamily":"Carabinae",
+    "tribe":"Carabin",
+    "genus":"Carabus",
+    "subgenus":"Platycarabus",
+    "species":"depressus",
+    "name":"Carabus depressus",
+    "species name":"Carabus depressus",
+    "kingdom":"Metazoa"
+},
+...
 ```
 ## BLAST
 
@@ -164,7 +194,7 @@ then run the bash script using nohup like so:
 nohup bash multi-bash.sh > multi-bash.out &!
 ```
 
-The output will take 1-2 days to run with 4 threads, consider using up to 6-8, but check the resources availble on pyrgus using htop
+The output will take 1-2 days to run with 4 threads, consider using up to 6-8, but check the resources available on pyrgus using htop
 
 ## diamond
 https://github.com/bbuchfink/diamond
@@ -250,6 +280,57 @@ GENOME="/home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fas
     -l insecta_odb10
 ```
 
-## blobtools
+## blobtoolkit, step 2
 
 Finally, we can use blob tools to evaluate our genome!
+
+all of these outputs we've generated will be processed by blobtools. In your assembly directory run the following commands individually or as a shell script
+
+For your blast and diamond analyses, you can, use more than one search output:
+```
+blobtools add \
+    --hits blast/nt.out \
+    --hits diamond/diamond.out \
+    --taxrule bestsumorder \
+    --taxdump ~/taxdump \
+    CBX1139
+```
+or 
+```
+blobtools add \
+    --hits blast/nt.out \
+    --hits blast/nt_prok.out \
+    --hits blast/nt_viruses.out \        
+    --hits diamond/diamond.out \
+    --taxrule bestsumorder \
+    --taxdump ~/taxdump \
+    CBX1139
+```
+
+Add coverage:
+
+```
+blobtools add \
+    --cov minimap2/assembly.reads.bam \
+    CBX1139
+```
+
+add busco scores the busco pipeline is a little clunky in its output, but this is fine, just be careful with your path here
+```
+blobtools add \
+    --busco /home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/busco/busco_/home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fasta/run_insecta_odb10/full_table.tsv \
+    CBX1139
+```
+
+Once you hae added all these tools, you can use the command line functions or use an interactive viewer
+
+However, to do so you will need to compress and download your directory, but you should be able to exclude those directories that have lots of data in them. (At the time of writing, I am waiting on Diamond to finish and haven't run this step yet)
+
+```
+tar -pczf CBX1139_blobtools.tar.gz 
+    /home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139 \
+    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/blasts" \
+    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/busco" \
+    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/bdiamond" \
+    --exclude "/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/minimap2" \
+```
