@@ -1,7 +1,7 @@
 # Carabus (Platycarabus) depresus (CBX1139) genome pipeline 
 
 Ethanol preserved specimen collected at ITALY: Valle d'Aosta, Saint-Rhémy-en-Bosses, Col du Grand Saint-Bernard in 2019.
-Performed a simple high molecular weight DNA Extraction using DNA blood and tissue kit.
+Performed a simple high molecular weight DNA Extraction using DNA blood and tissue kit reagents.
 
 ### DNA extraction QC results
 Fragment analysis~ 24.3 Kb peak; ~ 21.9 Kb smear (based on 2.5 ng/uL dilution). Elution volume of 100uL ddH2O; first qubit 1.085 μg; post-cleanup qubit 6.04 ng/μL or 543.6 ng total weight. Molarity for sequencing: 40.3 fmol
