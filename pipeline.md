@@ -333,7 +333,7 @@ blobtools view --remote `pwd`
 In the terminal on your __local machine__, run what the previous command tells you to do; and access the web address in your browser.
 
 
-If this doesnt work, the three basic blobtoolkit plots can be performed using the following command.
+If this doesnt work, the three basic blobtoolkit plots can be created using the following command.
 
 ```
 for PLOT in blobl cumulative snail;do
