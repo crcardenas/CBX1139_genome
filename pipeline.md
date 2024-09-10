@@ -108,35 +108,7 @@ Next you will need to create a blobtools directory using blobtools:
 blobtools create --fasta [path/to/your/assembly.fasta] CBX1139
 ```
 
-you will need to create directories for each analysis you want to run! It helps organize the data and keep things sane (trust me)
-(e.g., blast, busco, diamond, minimap2)
-Your diectory should look something like this:
-
-```
-./CBX1139/
-├── blasts
-├── busco
-├── diamond
-├── gc.json
-├── identifiers.json
-├── length.json
-├── meta.json
-├── minimap2
-├── multi-blash.out
-├── multi-blash.sh
-└── ncount.json
-```
-
-You can, and should, add additional information to your json file. This file type is an object oriented text based file format used to organize data.
-To add metadata for our sample, find the meta.json file (`./CBX1139/meta.json`) the field of interest will look like this:
-
-```
-...
-"taxon":{},
-...
-```
-
-You should search and edit a field that looks like this in your blobtools assembly directory (with a text editor: `nano CBX1139/meta.json`)
+Add meta data for our sample, find the meta.json file (`./CBX1139/meta.json`) the field of interest will look like this:
 
 ```
 ...
@@ -157,20 +129,18 @@ You should search and edit a field that looks like this in your blobtools assemb
 },
 ...
 ```
+
 ## BLAST
 
 BLAST is a **B**asic **L**ocal **A**lignment **S**earch **T**ool that we will use on the command line to find potential contaminants
-it is a relatively efficient search tool but the database is large, so you want to provide enough resources and time to run this script. I recommend starting this first as it could take a couple days depending on the resources you have available
+it is a relatively efficient search tool but the database is large, so you want to provide enough resources and time to run this script. I recommend starting this first as it could take a couple days depending on the resources available on the cluster
 
 make environment
 
 `$ conda create -n blast -c bioconda blast`
 
 
-we have already downloaded a directory for the genbank database (see blobtools section)
-
-Create a shell script named `multi-bash.sh` or something reasonable for you
-
+we have already downloaded a directory for the genbank database
 ```
 #!/bin/bash
 source /local/anaconda3/bin/activate
@@ -188,13 +158,11 @@ for i in nt nt_others nt_prok nt_viruses; do
 done
 ```
 
-then run the bash script using nohup like so:
+then run
 
 ```
 nohup bash multi-bash.sh > multi-bash.out &!
 ```
-
-The output will take 1-2 days to run with 4 threads, consider using up to 6-8, but check the resources available on pyrgus using htop
 
 ## diamond
 https://github.com/bbuchfink/diamond
@@ -206,8 +174,6 @@ Diamond behaves a lot like blast but is generally faster, and we will use a unip
 Create a conda environment
 
 `$ conda create -n diamond -c bioconda -c conda-forge diamond`
-
-In the diamond directory you've created, make a new bash script
 
 ```
 source /local/anaconda3/bin/activate
@@ -226,7 +192,6 @@ diamond blastx \
         --verbose \
         > diamond.out
 ```
-run that bash script using nohup
 
 ## minimap2
 https://github.com/lh3/minimap2
@@ -235,9 +200,9 @@ references doi:10.1093/bioinformatics/bty191 & doi:10.1093/bioinformatics/btab70
 
 `$ conda create -n minimap2 -c bioconda minimap2`
 
-I had to concatenate the raw minion fastq files, I have already done this and you can find it here: `/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/minimap2/raw_minion.fastq`
+I concatenated the raw minion fastq files, I have already done this and you can find it here: `/home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/minimap2/raw_minion.fastq`
 
-I would create a symlink, so you dont have to create many many databases. This is a useful tool to conserve space on a linux computer:
+I would create a symlink, so you dont have to create many many big files
 
 ```
 ln -s /home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/minimap2/raw_minion.fastq ./raw_minion.fastq
@@ -280,9 +245,18 @@ GENOME="/home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fas
     -l insecta_odb10
 ```
 
+## mitofinder
+
+We need to recover mitochondrial sequences that are present in our data
+
+```
+
+```
+
+
 ## blobtoolkit, step 2
 
-Finally, we can use blob tools to evaluate our genome!
+Finally, we use blob tools to evaluate our genome.
 
 all of these outputs we've generated will be processed by blobtools. In your assembly directory run the following commands individually or as a shell script
 
@@ -322,7 +296,23 @@ blobtools add \
     CBX1139
 ```
 
-Once you hae added all these tools, you can use the command line functions or use an interactive viewer. The interactive viewer will be easier to star with.
+Once you have added all these tools, you can use the command line functions or use an interactive viewer. The interactive viewer will be easier to star with.
+
+
+## blobtoolkit, filtering step
+
+Using blobtools to ID contigs to remove based on our filtering critera we first run the following commmand
+
+```
+blobtools filter \
+    --query-string "assembly.reads_cov--Min=20.0&length--Min=1000&bestsumorder_phylum--Keys=0%2C5%2C6%2C10%2C9%2C2%2C7%2C8%2C3%2C4&gc--Min=0.300" \
+    --fasta /home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fasta \
+    --output CBX1139_filtered \
+    CBX1139
+```
+
+We can then examine this filtered output, generate blob plots, and find loci to keep based on these statistics. This will be performed later.
+
 
 in the directory containing the assembly files *and* the data; use:
 
@@ -332,15 +322,20 @@ blobtools view --remote `pwd`
 
 In the terminal on your __local machine__, run what the previous command tells you to do; and access the web address in your browser.
 
-
 If this doesnt work, the three basic blobtoolkit plots can be created using the following command.
 
 ```
-for PLOT in blobl cumulative snail;do
+for PLOT in blobl cumulative snail; do
 	blobtools view --plot \
 		--format svg \
 		--view ${PLOT} \
 		--out ./blobtools/CBX1139/ \
 		./blobtools/CBX1139/;
 done
+```
+
+Last, we use seqkit to remove contigs from the assembly files using:
+```
+seqkit grep -f contigs_keep.list  /home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fasta -o nuc_DNA_CBX1139_filtered.fasta
+seqkit grep -f mtDNA_contigs_keep.list /home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fasta -o mit_DNA_CBX1139_filtered.fasta
 ```
