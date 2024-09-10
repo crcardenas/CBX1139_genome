@@ -222,6 +222,10 @@ minimap2 -ax map-ont \
 	-O BAM -o assembly.reads.bam
 ```
 
+Then use awk to calculate average depth:
+```
+samtools depth assembly.reads.bam | awk '{sum+=$3} END { print "Average = ",sum/NR}'
+```
 
 ## busco
 
