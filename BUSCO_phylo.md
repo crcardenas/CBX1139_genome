@@ -34,10 +34,10 @@ To get the CBX genome to play nice with this pipeline, append GCA to a symlink (
 ln -s /home/cody/CALOSOMA_Genomes/NANOPORE/blobtools/CBX1139/busco/busco_/home/cody/CALOSOMA_Genomes/NANOPORE/data/CBX1139_flye_test/assembly.fasta/run_insecta_odb10/busco_sequences/single_copy_busco_sequences ${PWD}/GCA_CBX1139
 ```
 
-#### List of busco's to ignore from CBX1139; they map to contaminated reads. So they can just be removed from the phylogenetic analysis (since we want 100% matricies!)
+#### List of busco's to ignore from CBX1139; they map to contaminated reads. So they can just be removed from the phylogenetic analysis
 54419at50557 70122at50557 144087at50557 19754at50557 84610at50557 129072at50557 143030at50557 30467at50557 47269at50557 64673at50557 80996at50557 123703at50557 149245at50557 12466at50557 70279at50557 70721at50557 108777at50557 129103at50557 144668at50557
 
-So, we use the following in the CBX1139 directory
+So, we use the following command in the  CBX1139 directory
 ```
 for i in 54419at50557 70122at50557 144087at50557 19754at50557 84610at50557 129072at50557 143030at50557 30467at50557 47269at50557 64673at50557 80996at50557 123703at50557 149245at50557 12466at50557 70279at50557 70721at50557 108777at50557 129103at50557 144668at50557; do rm ${i}.fna; done
 ```
@@ -66,7 +66,7 @@ make a new directory, `loci` and run the following command from within that dire
 awk '/^>/{locus_name=$1;gsub(">","",locus_name); next}{sequence=$0;sample_name=FILENAME; gsub(".tmp", "", sample_name); gsub("../", "",sample_name); output_file=locus_name".fasta";print ">"sample_name >> output_file;print sequence >> output_file}' ../*.tmp
 ```
 
-Need to align these loci now
+Align loci now
 
 ```
 #!/bin/bash
@@ -80,7 +80,7 @@ for i in loci/*.fasta;
 done
 ```
 
-then use trimal to clean up the mess!
+use trimal to clean up
 ```
 #!/bin/bash
 # activate conda environment
@@ -99,4 +99,45 @@ OK, now use amas to concatenate the loci together
 ~/AMAS/amas/AMAS.py concat -i trimmed/*.fasta -f fasta -d dna -u nexus
 ```
 
-### _**IQTREE2 commands to be added once baobab is up from maintence**_
+Once matrix is generated use iqtree2 to generate partitioning and then Sh-ALRT and UFBoot trees
+```
+#!/bin/bash
+
+cd /home/users/c/cardenac/Cdepresus_genome_phylo
+
+sbatch --job-name C_depressus_genome \
+--mem=56000 \
+--ntasks 1 \
+--cpus-per-task 14 \
+--partition public-cpu \
+--time 3-00:00:00 \
+--wrap "
+module load Anaconda3;
+source activate iqtree2;
+iqtree -s concatenated.nex \
+-p parti.nex \
+-m MF+MERGE \
+-rclusterf 10 \
+-T 14 \
+-safe;
+```
+
+```
+#!/bin/bash
+
+cd /home/users/c/cardenac/Cdepresus_genome_phylo
+
+sbatch --job-name C_depressus_genome_UFB \
+--mem=40000 \
+--ntasks 1 \
+--cpus-per-task 9 \
+--partition public-cpu \
+--time 2-00:00:00 \
+--wrap "
+module load Anaconda3;
+source activate iqtree2;
+iqtree -s concatenated.nex -p parti.nex.best_model.nex \
+-o GCA_963971575 -allnni -bnni -bb 1000 -alrt 1000 \
+-T 9 -safe ;
+"
+```
